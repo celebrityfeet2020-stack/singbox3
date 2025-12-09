@@ -40,14 +40,14 @@ RUN apk add --no-cache \
     cargo \
     && rm -rf /var/cache/apk/*
 
-# 安装Python包
+# 安装Python包（不指定版本，让pip自动选择兼容版本）
 RUN pip3 install --no-cache-dir \
-    fastapi==0.104.1 \
-    uvicorn[standard]==0.24.0 \
-    pydantic==2.5.0 \
-    aiosqlite==0.19.0 \
-    httpx==0.25.2 \
-    python-multipart==0.0.6
+    fastapi \
+    "uvicorn[standard]" \
+    pydantic \
+    aiosqlite \
+    httpx \
+    python-multipart
 
 # 创建必要目录
 RUN mkdir -p \
