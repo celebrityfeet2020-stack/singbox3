@@ -16,9 +16,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -32,11 +29,11 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./primary
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
           tags: |
             junpeng999/singbox-gateway:latest
-            junpeng999/singbox-gateway:v2.0
+            junpeng999/singbox-gateway:v3.0
             junpeng999/singbox-gateway:latest-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
