@@ -31,6 +31,13 @@ RUN apk add --no-cache \
     supervisor \
     # 数据库
     sqlite \
+    # Python编译依赖
+    gcc \
+    musl-dev \
+    python3-dev \
+    libffi-dev \
+    openssl-dev \
+    cargo \
     && rm -rf /var/cache/apk/*
 
 # 安装Python包
