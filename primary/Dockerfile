@@ -73,11 +73,11 @@ RUN sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config && \
     echo 'root:gateway2024' | chpasswd
 
 # 暴露端口
-EXPOSE 53/udp    # DNS
-EXPOSE 80/tcp    # Web管理界面
-EXPOSE 22/tcp    # SSH
-EXPOSE 9090/tcp  # Clash API
-EXPOSE 9091/tcp  # FastAPI
+EXPOSE 53/udp
+EXPOSE 80/tcp
+EXPOSE 22/tcp
+EXPOSE 9090/tcp
+EXPOSE 9091/tcp
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
