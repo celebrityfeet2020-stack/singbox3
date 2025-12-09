@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sing-box网关管理</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card h3 {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card.direct .stat-value { color: #3b82f6; }
+        .stat-card.us .stat-value { color: #ef4444; }
+        .stat-card.sg .stat-value { color: #10b981; }
+        
+        .stat-unit {
+            font-size: 0.9em;
+            color: #999;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .chart-header h2 {
+            font-size: 1.5em;
+            color: #333;
+        }
+        
+        .time-selector {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .time-btn {
+            padding: 8px 20px;
+            border: none;
+            background: #f3f4f6;
+            color: #666;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+        }
+        
+        .time-btn:hover {
+            background: #e5e7eb;
+        }
+        
+        .time-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .domain-manager {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .domain-manager h2 {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .domain-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .domain-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        
+        .domain-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+            padding: 6px 12px;
+            font-size: 0.85em;
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        
+        .domain-list {
+            list-style: none;
+        }
+        
+        .domain-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #f3f4f6;
+            transition: background 0.3s;
+        }
+        
+        .domain-item:hover {
+            background: #f9fafb;
+        }
+        
+        .domain-item:last-child {
+            border-bottom: none;
+        }
+        
+        .domain-name {
+            font-size: 1.1em;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .domain-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #10b981;
+            color: white;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .domain-input-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>🚀 sing-box网关管理</h1>
+            <p>实时监控 · 智能分流 · 双线路负载</p>
+        </div>
+        
+        <!-- 统计卡片 -->
+        <div class="stats-grid">
+            <div class="stat-card direct">
+                <h3>直连流量</h3>
+                <div class="stat-value" id="directTotal">0</div>
+                <div class="stat-unit">MB</div>
+            </div>
+            <div class="stat-card us">
+                <h3>美国线路</h3>
+                <div class="stat-value" id="usTotal">0</div>
+                <div class="stat-unit">MB</div>
+            </div>
+            <div class="stat-card sg">
+                <h3>新加坡线路</h3>
+                <div class="stat-value" id="sgTotal">0</div>
+                <div class="stat-unit">MB</div>
+            </div>
+        </div>
+        
+        <!-- 流量图表 -->
+        <div class="chart-container">
+            <div class="chart-header">
+                <h2>📊 流量趋势</h2>
+                <div class="time-selector">
+                    <button class="time-btn active" onclick="switchTimeRange('24h')">24小时</button>
+                    <button class="time-btn" onclick="switchTimeRange('30d')">30天</button>
+                </div>
+            </div>
+            <canvas id="trafficChart"></canvas>
+        </div>
+        
+        <!-- 域名管理 -->
+        <div class="domain-manager">
+            <h2>🌐 特殊域名管理</h2>
+            <p style="color: #666; margin-bottom: 15px; font-size: 0.9em;">
+                添加的域名将通过新加坡线路访问
+            </p>
+            
+            <div class="domain-input-group">
+                <input 
+                    type="text" 
+                    class="domain-input" 
+                    id="domainInput" 
+                    placeholder="输入域名，例如：example.com"
+                    onkeypress="if(event.key==='Enter') addDomain()"
+                >
+                <button class="btn btn-primary" onclick="addDomain()">添加域名</button>
+            </div>
+            
+            <div id="domainError" class="error" style="display: none;"></div>
+            
+            <ul class="domain-list" id="domainList">
+                <li class="loading">加载中...</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        // API基础URL
+        const API_BASE = '/api';
+        
+        // 当前时间范围
+        let currentTimeRange = '24h';
+        
+        // Chart.js实例
+        let trafficChart = null;
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initChart();
+            loadData();
+            loadDomains();
+            
+            // 每30秒刷新一次数据
+            setInterval(loadData, 30000);
+        });
+        
+        // 初始化图表
+        function initChart() {
+            const ctx = document.getElementById('trafficChart').getContext('2d');
+            trafficChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: '直连',
+                            data: [],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: '美国',
+                            data: [],
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: '新加坡',
+                            data: [],
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 2.5,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    size: 14
+                                },
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    label += formatBytes(context.parsed.y);
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return formatBytes(value);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 加载数据
+        async function loadData() {
+            try {
+                // 加载实时数据
+                const realtimeRes = await fetch(`${API_BASE}/traffic/realtime`);
+                const realtime = await realtimeRes.json();
+                
+                updateStats(realtime);
+                
+                // 加载图表数据
+                const endpoint = currentTimeRange === '24h' ? 'hourly?hours=24' : 'daily?days=30';
+                const chartRes = await fetch(`${API_BASE}/traffic/${endpoint}`);
+                const chartData = await chartRes.json();
+                
+                updateChart(chartData);
+                
+            } catch (error) {
+                console.error('加载数据失败:', error);
+            }
+        }
+        
+        // 更新统计卡片
+        function updateStats(data) {
+            document.getElementById('directTotal').textContent = formatBytes(data.direct_bytes, 0);
+            document.getElementById('usTotal').textContent = formatBytes(data.us_bytes, 0);
+            document.getElementById('sgTotal').textContent = formatBytes(data.sg_bytes, 0);
+        }
+        
+        // 更新图表
+        function updateChart(data) {
+            trafficChart.data.labels = data.map(d => d.time);
+            trafficChart.data.datasets[0].data = data.map(d => d.direct_total);
+            trafficChart.data.datasets[1].data = data.map(d => d.us_total);
+            trafficChart.data.datasets[2].data = data.map(d => d.sg_total);
+            trafficChart.update();
+        }
+        
+        // 切换时间范围
+        function switchTimeRange(range) {
+            currentTimeRange = range;
+            
+            // 更新按钮状态
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 重新加载数据
+            loadData();
+        }
+        
+        // 加载域名列表
+        async function loadDomains() {
+            try {
+                const res = await fetch(`${API_BASE}/domains`);
+                const domains = await res.json();
+                
+                const listEl = document.getElementById('domainList');
+                
+                if (domains.length === 0) {
+                    listEl.innerHTML = '<li class="empty-state">暂无特殊域名</li>';
+                    return;
+                }
+                
+                listEl.innerHTML = domains.map(d => `
+                    <li class="domain-item">
+                        <div>
+                            <span class="domain-name">${d.domain}</span>
+                            <span class="domain-tag">新加坡</span>
+                        </div>
+                        <button class="btn btn-danger" onclick="deleteDomain('${d.domain}')">删除</button>
+                    </li>
+                `).join('');
+                
+            } catch (error) {
+                console.error('加载域名列表失败:', error);
+                document.getElementById('domainList').innerHTML = 
+                    '<li class="error">加载失败，请刷新页面重试</li>';
+            }
+        }
+        
+        // 添加域名
+        async function addDomain() {
+            const input = document.getElementById('domainInput');
+            const domain = input.value.trim();
+            const errorEl = document.getElementById('domainError');
+            
+            // 隐藏错误提示
+            errorEl.style.display = 'none';
+            
+            if (!domain) {
+                showError('请输入域名');
+                return;
+            }
+            
+            // 简单验证
+            if (!/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain)) {
+                showError('域名格式不正确');
+                return;
+            }
+            
+            try {
+                const res = await fetch(`${API_BASE}/domains`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ domain })
+                });
+                
+                if (!res.ok) {
+                    const error = await res.json();
+                    throw new Error(error.detail || '添加失败');
+                }
+                
+                // 清空输入框
+                input.value = '';
+                
+                // 重新加载列表
+                loadDomains();
+                
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+        
+        // 删除域名
+        async function deleteDomain(domain) {
+            if (!confirm(`确定要删除域名 ${domain} 吗？`)) {
+                return;
+            }
+            
+            try {
+                const res = await fetch(`${API_BASE}/domains/${encodeURIComponent(domain)}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!res.ok) {
+                    throw new Error('删除失败');
+                }
+                
+                // 重新加载列表
+                loadDomains();
+                
+            } catch (error) {
+                alert('删除失败: ' + error.message);
+            }
+        }
+        
+        // 显示错误
+        function showError(message) {
+            const errorEl = document.getElementById('domainError');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            setTimeout(() => {
+                errorEl.style.display = 'none';
+            }, 5000);
+        }
+        
+        // 格式化字节数
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0';
+            
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + (i > 0 ? '' : ' ' + sizes[i]);
+        }
+    </script>
+</body>
+</html>

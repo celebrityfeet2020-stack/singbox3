@@ -1,0 +1,36 @@
+.
+├── DEPLOYMENT_GUIDE.md
+├── PROJECT_STRUCTURE.txt
+├── README.md
+├── backup
+│   ├── Dockerfile
+│   └── entrypoint.sh
+├── build.sh
+├── config
+│   └── README.txt
+├── deploy.sh
+├── failover.sh
+├── primary
+│   ├── Dockerfile
+│   ├── app
+│   │   ├── scripts
+│   │   │   └── entrypoint.sh
+│   │   └── server
+│   │       ├── __init__.py
+│   │       ├── database.py
+│   │       ├── domain_manager.py
+│   │       ├── main.py
+│   │       └── traffic_collector.py
+│   ├── config
+│   │   ├── nginx
+│   │   │   └── default.conf
+│   │   ├── sing-box
+│   │   │   └── config.json.template
+│   │   └── supervisor
+│   │       └── supervisord.conf
+│   ├── frontend
+│   │   └── index.html
+│   └── requirements.txt
+└── restore.sh
+
+11 directories, 22 files

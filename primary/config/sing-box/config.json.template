@@ -1,0 +1,149 @@
+{
+  "log": {
+    "level": "info",
+    "timestamp": true
+  },
+  "dns": {
+    "servers": [
+      {
+        "tag": "dns-remote",
+        "address": "https://1.1.1.1/dns-query",
+        "address_resolver": "dns-direct",
+        "detour": "direct"
+      },
+      {
+        "tag": "dns-direct",
+        "address": "223.5.5.5",
+        "detour": "direct"
+      },
+      {
+        "tag": "dns-block",
+        "address": "rcode://success"
+      }
+    ],
+    "rules": [
+      {
+        "outbound": "any",
+        "server": "dns-direct"
+      },
+      {
+        "geosite": "category-ads-all",
+        "server": "dns-block",
+        "disable_cache": true
+      },
+      {
+        "rule_set": ["geosite-cn"],
+        "server": "dns-direct"
+      }
+    ],
+    "final": "dns-remote",
+    "strategy": "prefer_ipv4"
+  },
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "interface_name": "tun0",
+      "inet4_address": "172.19.0.1/30",
+      "mtu": 9000,
+      "auto_route": true,
+      "strict_route": true,
+      "stack": "system",
+      "sniff": true,
+      "sniff_override_destination": false
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    },
+    {
+      "type": "block",
+      "tag": "block"
+    },
+    {
+      "type": "dns",
+      "tag": "dns-out"
+    },
+    {
+      "type": "wireguard",
+      "tag": "wg-us",
+      "server": "49.235.186.64",
+      "server_port": 51823,
+      "local_address": ["10.99.98.3/24"],
+      "private_key": "REPLACE_WITH_ACTUAL_PRIVATE_KEY",
+      "peer_public_key": "REPLACE_WITH_VPS8_PUBLIC_KEY",
+      "mtu": 1420
+    },
+    {
+      "type": "wireguard",
+      "tag": "wg-sg",
+      "server": "212.64.83.18",
+      "server_port": 51822,
+      "local_address": ["10.99.99.3/24"],
+      "private_key": "REPLACE_WITH_ACTUAL_PRIVATE_KEY",
+      "peer_public_key": "REPLACE_WITH_VPS9_PUBLIC_KEY",
+      "mtu": 1420
+    }
+  ],
+  "route": {
+    "rule_set": [
+      {
+        "type": "local",
+        "tag": "special-domains",
+        "format": "source",
+        "path": "/etc/sing-box/special_domains.json"
+      },
+      {
+        "type": "remote",
+        "tag": "geosite-cn",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-cn.srs",
+        "download_detour": "direct",
+        "update_interval": "7d"
+      },
+      {
+        "type": "remote",
+        "tag": "geoip-cn",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-cn.srs",
+        "download_detour": "direct",
+        "update_interval": "7d"
+      }
+    ],
+    "rules": [
+      {
+        "protocol": "dns",
+        "outbound": "dns-out"
+      },
+      {
+        "geosite": "category-ads-all",
+        "outbound": "block"
+      },
+      {
+        "rule_set": ["special-domains"],
+        "outbound": "wg-sg"
+      },
+      {
+        "rule_set": ["geoip-cn", "geosite-cn"],
+        "outbound": "direct"
+      },
+      {
+        "geosite": "geolocation-!cn",
+        "outbound": "wg-us"
+      }
+    ],
+    "final": "direct",
+    "auto_detect_interface": true
+  },
+  "experimental": {
+    "clash_api": {
+      "external_controller": "0.0.0.0:9090",
+      "external_ui": "ui",
+      "external_ui_download_url": "https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip",
+      "external_ui_download_detour": "direct",
+      "default_mode": "rule"
+    }
+  }
+}

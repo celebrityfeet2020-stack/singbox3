@@ -1,0 +1,45 @@
+name: Build and Push Primary Gateway Image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'primary/**'
+      - '.github/workflows/build-primary.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Primary Gateway image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./primary
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            junpeng999/singbox-gateway:latest
+            junpeng999/singbox-gateway:v2.0
+            junpeng999/singbox-gateway:latest-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Image digest
+        run: echo "Image pushed successfully!"
