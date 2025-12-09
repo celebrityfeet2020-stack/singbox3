@@ -1,35 +1,6 @@
-# sing-box网关主容器 - 多阶段构建版本
-# 阶段1: Python环境准备
-# 阶段2: 最终镜像组装
+# sing-box网关主容器 v3.0
+# 基于官方sing-box镜像，添加完整管理功能
 
-# ============================================================
-# 阶段1: Python环境构建
-# ============================================================
-FROM python:3.11-alpine AS python-builder
-
-LABEL stage="python-builder"
-
-# 安装Python编译依赖
-RUN apk add --no-cache \
-    gcc \
-    musl-dev \
-    libffi-dev \
-    openssl-dev \
-    cargo \
-    rust
-
-# 安装Python包到独立目录
-RUN pip3 install --no-cache-dir --prefix=/python-install \
-    fastapi \
-    "uvicorn[standard]" \
-    pydantic \
-    aiosqlite \
-    httpx \
-    python-multipart
-
-# ============================================================
-# 阶段2: 最终镜像
-# ============================================================
 FROM ghcr.io/sagernet/sing-box:latest
 
 LABEL maintainer="gateway-admin"
@@ -37,10 +8,7 @@ LABEL description="sing-box网关主容器 - 包含Web管理、流量统计、�
 LABEL version="3.0.0"
 LABEL architecture="amd64"
 
-# 从python-builder复制Python环境
-COPY --from=python-builder /python-install /usr/local
-
-# 安装系统依赖（不包含Python编译工具）
+# 安装系统依赖和Python编译工具
 RUN apk add --no-cache \
     # 基础工具
     bash \
@@ -59,11 +27,27 @@ RUN apk add --no-cache \
     nginx \
     # Python运行时
     python3 \
+    py3-pip \
     # 进程管理
     supervisor \
     # 数据库
     sqlite \
+    # Python编译依赖（临时使用）
+    gcc \
+    musl-dev \
+    python3-dev \
+    libffi-dev \
+    openssl-dev \
     && rm -rf /var/cache/apk/*
+
+# 安装Python包（不指定版本，让pip自动选择兼容版本）
+RUN pip3 install --no-cache-dir --break-system-packages \
+    fastapi \
+    "uvicorn[standard]" \
+    pydantic \
+    aiosqlite \
+    httpx \
+    python-multipart
 
 # 创建必要目录
 RUN mkdir -p \
